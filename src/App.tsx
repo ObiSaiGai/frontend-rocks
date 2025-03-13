@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export const App = () => {
   const [count, setCount] = useState(0);
-  const [title, setTitle] = useState("Frontend Rocks");
+  const [title, setTitle] = useState("TITOLONE");
 
   return (
     <div className="h-dvh flex flex-col items-center justify-center">
