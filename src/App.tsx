@@ -1,52 +1,87 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { PokeAPI } from "./pokeapiClient";
+import { Pokemon } from "pokeapi-js-wrapper";
 
-export const Detail = () => {
-  const { id } = useParams();
-  return <div>Dettaglio:{id}</div>
+interface PokemonCard {
+  id: number;
+  image: string;
+  name: string;
+  type: string[];
 }
 
-export const App = () => {
-  const [count, setCount] = useState(0);
-  const [title, setTitle] = useState("TITOLONE");
+const typeColors: { [key: string]: string } = {
+  fire: "bg-red-500",
+  water: "bg-blue-500",
+  grass: "bg-green-500",
+  poison: "bg-purple-500",
+  bug: "bg-green-500",
+  normal: "bg-gray-500",
+  dragon: "bg-purple-700",
+  steel: "bg-gray-700",
+  flying: "bg-indigo-400",
+  rock: "bg-yellow-700",
+  ground: "bg-yellow-500",
+};
 
-  useEffect(() => {
-    if (count === 4) {
-      setTitle("4 Bananelle")
-    }
-  }, [count])
+function getTypeColor(type: string) {
+  return typeColors[type] || "bg-gray-300";
+}
 
+const Card = (props: PokemonCard) => {
   return (
-    <div className="h-dvh flex flex-col items-center justify-center">
-      <div className="bg-white p-8 rounded-md shadow-lg">
-        <h1 className="text-center font-bold text-3xl text-blue-400 mb-4">
-          {title}
-        </h1>
-
-        <h2 className="text-center font-bold text-xl mb-6">Vite + React</h2>
-
-        <div className="flex flex-col items-center space-y-4">
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded-md shadow-md cursor-pointer hover:bg-blue-600 transition-colors"
-            onClick={() => setCount((count) => count + 1)}
-          >
-            Hai premuto il pulsante {count} {count === 1 ? "volta" : "volte"}
-          </button>
-
-          <button
-              className="bg-blue-500 text-white px-4 py-2 rounded-md shadow-md cursor-pointer hover:bg-blue-600 transition-colors"
-              onClick={() => setTitle("Charizard")}
-          >
-            Cambia
-          </button>
-
-          <Link to="/frontend-rocks/dettaglio/1">Link alla pagina di dettaglio</Link>
-
-          <p className="text-center">
-            Modifica <code>src/App.tsx</code> e salva per testare l'hot reload
-          </p>
-        </div>
+    <div className="border p-5 m-7 bg-white rounded-lg shadow-md w-60 text-center">
+      <h3 className="text-lg font-bold capitalize">{props.name}</h3>
+      <img src={props.image} alt={props.name} className="w-24 h-24 mx-auto my-2" />
+      <div className="flex space-x-2">
+        {props.type.map((type) => (
+          <span key={type} className={`p-2 text-white rounded ${getTypeColor(type)}`}>
+            {type}
+          </span>
+        ))}
       </div>
     </div>
   );
-}
+};
+
+export const App = () => {
+  const [data, setData] = useState<PokemonCard[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await PokeAPI.getPokemonsList({ offset: 0, limit: 10 });
+        const pokemonNames = response.results.map((item: { name: string }) => item.name);
+
+        const pokemonDetails = await Promise.all(
+          pokemonNames.map(async (name: string) => {
+            const pokemon: Pokemon = await PokeAPI.getPokemonByName(name);
+            return {
+              id: pokemon.id,
+              name: pokemon.name,
+              image: pokemon.sprites.front_default ?? "https://via.placeholder.com/96",
+              type: pokemon.types.map((t) => t.type.name),
+            };
+          })
+        );
+
+        setData(pokemonDetails);
+      } catch (error) {
+        console.error("Errore nel recupero dei Pokémon:", error);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  return (
+    <div className="flex flex-wrap bg-gray-100 p-4">
+      {data.map((item) => (
+        <Card key={item.id} {...item} />
+      ))}
+    </div>
+  );
+};
+
+export const Detail = () => {
+  return null;
+};
