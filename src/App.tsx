@@ -1,4 +1,10 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router";
+
+export const Detail = () => {
+  const { id } = useParams();
+  return <div>Dettaglio:{id}</div>
+}
 
 export const App = () => {
   const [count, setCount] = useState(0);
